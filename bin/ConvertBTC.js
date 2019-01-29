@@ -1,7 +1,7 @@
 'use strict';
 
 var chalk = require('chalk');
-var request = require('request');
+var request = require('request-promise-native');
 var ora = require('ora');
 
 var spinner = ora({
@@ -17,17 +17,16 @@ function convertBTC() {
 
     spinner.start();
 
-    request(url, function (error, response, body) {
-        var apiResp = void 0;
-
-        try {
-            apiResp = JSON.parse(body);
-            spinner.stop();
-        } catch (error) {
-            console.log(chalk.red('Somethig went wrong in the API. Try in a few minutes.'));
-            return error;
-        }
-        console.log(chalk.red(amount) + ' BTC to ' + chalk.cyan(currency) + ' = ' + chalk.yellow(apiResp.price));
+    return request(url).then(function (body) {
+        spinner.stop();
+        return body;
+    }).then(function (body) {
+        var apiResp = JSON.parse(body);
+        console.info(chalk.red(amount) + ' BTC to ' + chalk.cyan(currency) + ' = ' + chalk.yellow(apiResp.price));
+    }).catch(function (err) {
+        spinner.stop();
+        console.info(chalk.red('Somethig went wrong in the API. Try in a few minutes.'));
+        return err;
     });
 }
 
